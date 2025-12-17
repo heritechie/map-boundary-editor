@@ -1,5 +1,9 @@
 # map-boundary-editor
 
+[![npm](https://img.shields.io/npm/v/map-boundary-editor)](https://www.npmjs.com/package/map-boundary-editor)
+[![license](https://img.shields.io/npm/l/map-boundary-editor)](LICENSE)
+[![downloads](https://img.shields.io/npm/dm/map-boundary-editor)](https://www.npmjs.com/package/map-boundary-editor)
+
 **map-boundary-editor** is a generic, embeddable, map-based boundary editor
 implemented as a Web Component.
 
