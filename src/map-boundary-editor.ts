@@ -25,12 +25,10 @@ export class MapBoundaryEditor extends HTMLElement {
         }
       </style>
 
-      <!-- Leaflet CSS -->
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       />
-      <!-- Leaflet Draw CSS -->
       <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
@@ -43,7 +41,7 @@ export class MapBoundaryEditor extends HTMLElement {
     this.initDraw();
   }
 
-  initMap() {
+  private initMap() {
     const mapEl = this.shadowRoot!.getElementById("map") as HTMLElement;
 
     this.map = L.map(mapEl).setView([-6.2, 106.8], 12);
@@ -55,7 +53,7 @@ export class MapBoundaryEditor extends HTMLElement {
     this.map.addLayer(this.drawnItems);
   }
 
-  initDraw() {
+  private initDraw() {
     if (!this.map) return;
 
     const drawControl = new L.Control.Draw({
@@ -63,7 +61,7 @@ export class MapBoundaryEditor extends HTMLElement {
         featureGroup: this.drawnItems,
       },
       draw: {
-        polygon: true,
+        polygon: {},
         polyline: false,
         rectangle: false,
         circle: false,
@@ -76,7 +74,7 @@ export class MapBoundaryEditor extends HTMLElement {
 
     // CREATE
     this.map.on(L.Draw.Event.CREATED, (e: any) => {
-      this.drawnItems.clearLayers(); // single-boundary
+      this.drawnItems.clearLayers();
       this.drawnItems.addLayer(e.layer);
       this.emitChange();
     });
@@ -92,9 +90,8 @@ export class MapBoundaryEditor extends HTMLElement {
     });
   }
 
-  emitChange() {
-    const geojson = this.drawnItems.toGeoJSON();
-
+  private emitChange() {
+    const geojson = this.getGeoJSON();
     this.dispatchEvent(
       new CustomEvent("change", {
         detail: { geojson },
@@ -102,10 +99,32 @@ export class MapBoundaryEditor extends HTMLElement {
     );
   }
 
-  // === Public API (v0.1) ===
+  // =========================
+  // Public API (v0.1)
+  // =========================
 
   getGeoJSON() {
     return this.drawnItems.toGeoJSON();
+  }
+
+  setGeoJSON(geojson: any) {
+    if (!this.map) return;
+
+    this.drawnItems.clearLayers();
+
+    const layer = L.geoJSON(geojson, {
+      onEachFeature: (_, l) => {
+        this.drawnItems.addLayer(l);
+      },
+    });
+
+    // zoom map to boundary
+    const bounds = layer.getBounds();
+    if (bounds.isValid()) {
+      this.map.fitBounds(bounds);
+    }
+
+    this.emitChange();
   }
 
   clear() {
