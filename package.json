@@ -2,19 +2,38 @@
   "name": "map-boundary-editor",
   "version": "0.1.0",
   "description": "Generic embeddable map boundary editor as a Web Component",
+  "license": "MIT",
   "type": "module",
   "main": "dist/map-boundary-editor.js",
+  "exports": {
+    ".": "./dist/map-boundary-editor.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heritechie/map-boundary-editor.git"
+  },
+  "keywords": [
+    "map",
+    "boundary",
+    "geofence",
+    "geojson",
+    "leaflet",
+    "web-component"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
     "@types/leaflet-draw": "^1.0.13",
     "vite": "^5.0.0"
-  },
-  "dependencies": {
-    "leaflet": "^1.9.4",
-    "leaflet-draw": "^1.0.4"
   }
 }
