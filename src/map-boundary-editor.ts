@@ -12,6 +12,10 @@ export class MapBoundaryEditor extends HTMLElement {
     this.attachShadow({ mode: "open" });
   }
 
+  static get observedAttributes() {
+    return ["use-geolocation"];
+  }
+
   connectedCallback() {
     if (!this.shadowRoot) return;
 
@@ -41,6 +45,21 @@ export class MapBoundaryEditor extends HTMLElement {
 
     this.initMap();
     this.initDraw();
+  }
+
+  attributeChangedCallback(
+    name: string,
+    oldValue: string | null,
+    newValue: string | null
+  ) {
+    if (name === "use-geolocation") {
+      // attribute added
+      if (newValue !== null) {
+        this.runOrQueue(() => {
+          this.maybeUseGeolocation();
+        });
+      }
+    }
   }
 
   private runOrQueue(action: () => void) {
@@ -127,12 +146,7 @@ export class MapBoundaryEditor extends HTMLElement {
         this.map!.setView([latitude, longitude], 13);
       },
       () => {
-        // silently ignore (fallback to default)
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 0,
+        // silent fallback
       }
     );
   }
