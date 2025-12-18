@@ -3,20 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <title>map-boundary-editor demo</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      .controls {
+        margin-bottom: 12px;
+      }
+      button {
+        padding: 6px 10px;
+        margin-right: 8px;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
     <h2>Map Boundary Editor Demo</h2>
-    <map-boundary-editor
-      style="width: 1024px; height: 800px"
-    ></map-boundary-editor>
 
-    <script type="module" src="/src/index.ts">
-            import "/src/index.ts";
+    <div class="controls">
+      <button id="enableGeo">Enable Geolocation</button>
+      <button id="disableGeo">Disable Geolocation</button>
+    </div>
+
+    <map-boundary-editor
+      id="editor"
+      style="width: 1024px; height: 800px; border: 1px solid #ccc"
+    >
+    </map-boundary-editor>
+
+    <script type="module">
+      import "/src/index.ts";
 
       const editor = document.getElementById("editor");
+      const enableBtn = document.getElementById("enableGeo");
+      const disableBtn = document.getElementById("disableGeo");
 
-      // lifecycle-safe → boleh langsung
-      editor.setView(-6.2, 106.8, 5);
+      enableBtn.addEventListener("click", () => {
+        editor.setAttribute("use-geolocation", "");
+      });
+
+      disableBtn.addEventListener("click", () => {
+        editor.removeAttribute("use-geolocation");
+      });
 
       editor.addEventListener("change", (e) => {
         console.log("GeoJSON:", e.detail.geojson);
