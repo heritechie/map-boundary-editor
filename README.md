@@ -89,7 +89,7 @@ Use module scripts only to ensure correct loading order.
 
 ---
 
-## Setting Initial View
+### Setting Initial View
 
 ```js
 editor.setView(lat, lng, zoom);
@@ -99,7 +99,7 @@ If a boundary is later loaded using setGeoJSON, the map will automatically fit t
 
 ---
 
-## Loading an Existing Boundary
+### Loading an Existing Boundary
 
 ```js
 editor.setGeoJSON({
@@ -118,6 +118,46 @@ editor.setGeoJSON({
   properties: {},
 });
 ```
+
+---
+
+### Optional: Use User Geolocation
+
+`map-boundary-editor` supports an optional geolocation-based initial view to help users quickly focus on their current area.
+
+This feature is **opt-in** and **disabled by default**.
+
+---
+
+### Enable Geolocation (Opt-in)
+
+```html
+<map-boundary-editor use-geolocation></map-boundary-editor>
+```
+
+When enabled:
+
+- The editor will attempt to center the map on the user’s current location
+- The browser will request permission explicitly
+- If permission is denied or unavailable, the map silently falls back to the default view
+
+---
+
+### Behavior & Priority Rules
+
+The initial map view follows this priority order:
+
+1. `setGeoJSON()`
+
+   If boundaries are loaded, the map will automatically fit to them.
+
+2. `use-geolocation` **attribute**
+
+   If enabled and permission is granted, the map centers on the user’s location.
+
+3. **Default view**
+
+   Falls back to a neutral world view (`[0, 0]`, zoom `2`).
 
 ---
 
