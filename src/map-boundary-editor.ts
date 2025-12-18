@@ -4,6 +4,8 @@ import "leaflet-draw";
 export class MapBoundaryEditor extends HTMLElement {
   private map?: L.Map;
   private drawnItems = new L.FeatureGroup();
+  private isReady = false;
+  private pendingActions: (() => void)[] = [];
 
   constructor() {
     super();
@@ -41,16 +43,29 @@ export class MapBoundaryEditor extends HTMLElement {
     this.initDraw();
   }
 
+  private runOrQueue(action: () => void) {
+    if (!this.isReady) {
+      this.pendingActions.push(action);
+      return;
+    }
+    action();
+  }
+
   private initMap() {
     const mapEl = this.shadowRoot!.getElementById("map") as HTMLElement;
 
-    this.map = L.map(mapEl).setView([-6.2, 106.8], 12);
+    this.map = L.map(mapEl).setView([0, 0], 2);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap contributors",
     }).addTo(this.map);
 
     this.map.addLayer(this.drawnItems);
+
+    this.isReady = true;
+
+    this.pendingActions.forEach((fn) => fn());
+    this.pendingActions = [];
   }
 
   private initDraw() {
@@ -91,6 +106,7 @@ export class MapBoundaryEditor extends HTMLElement {
 
   private emitChange() {
     const geojson = this.getGeoJSON();
+
     this.dispatchEvent(
       new CustomEvent("change", {
         detail: { geojson },
@@ -103,31 +119,56 @@ export class MapBoundaryEditor extends HTMLElement {
   // =========================
 
   getGeoJSON() {
+    if (!this.drawnItems) {
+      return {
+        type: "FeatureCollection",
+        features: [],
+      };
+    }
+
     return this.drawnItems.toGeoJSON();
   }
 
   setGeoJSON(geojson: any) {
-    if (!this.map) return;
+    this.runOrQueue(() => {
+      if (!this.map || !this.drawnItems) return;
 
-    this.drawnItems.clearLayers();
+      this.drawnItems.clearLayers();
 
-    const layerGroup = L.geoJSON(geojson, {
-      onEachFeature: (_, layer) => {
-        this.drawnItems.addLayer(layer);
-      },
+      const layerGroup = L.geoJSON(geojson, {
+        onEachFeature: (_, layer) => {
+          this.drawnItems!.addLayer(layer);
+        },
+      });
+
+      const bounds = layerGroup.getBounds();
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds);
+      }
+
+      this.emitChange();
     });
+  }
 
-    const bounds = layerGroup.getBounds();
-    if (bounds.isValid()) {
-      this.map.fitBounds(bounds);
-    }
+  setView(lat: number, lng: number, zoom?: number) {
+    this.runOrQueue(() => {
+      if (!this.map) return;
 
-    this.emitChange();
+      if (typeof zoom === "number") {
+        this.map.setView([lat, lng], zoom);
+      } else {
+        this.map.panTo([lat, lng]);
+      }
+    });
   }
 
   clear() {
-    this.drawnItems.clearLayers();
-    this.emitChange();
+    this.runOrQueue(() => {
+      if (!this.drawnItems) return;
+
+      this.drawnItems.clearLayers();
+      this.emitChange();
+    });
   }
 }
 
