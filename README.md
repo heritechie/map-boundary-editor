@@ -63,19 +63,39 @@ npm install map-boundary-editor
 
 ---
 
-## Basic Usage
+## Basic Usage (Recommended)
+
+Use module scripts only to ensure correct loading order.
 
 ```html
-<map-boundary-editor style="width: 800px; height: 500px;"></map-boundary-editor>
+<map-boundary-editor id="editor" style="width: 800px; height: 500px;">
+</map-boundary-editor>
 
-<script>
-  const editor = document.querySelector("map-boundary-editor");
+<script type="module">
+  import "map-boundary-editor";
+
+  const editor = document.getElementById("editor");
+
+  // Public APIs are lifecycle-safe
+  editor.setView(-6.2, 106.8, 11);
 
   editor.addEventListener("change", (e) => {
     console.log("GeoJSON:", e.detail.geojson);
   });
 </script>
 ```
+
+> Note: All public APIs (`setView`, `setGeoJSON`, `clear`) are safe to call immediately after the element is created. No `setTimeout` or `customElements.whenDefined` is required.
+
+---
+
+## Setting Initial View
+
+```js
+editor.setView(lat, lng, zoom);
+```
+
+If a boundary is later loaded using setGeoJSON, the map will automatically fit to the boundary.
 
 ---
 
@@ -103,17 +123,21 @@ editor.setGeoJSON({
 
 ## Public API (v0.1)
 
-`getGeoJSON(): GeoJSON`
+`getGeoJSON(): FeatureCollection`
 
-Returns the current boundary as GeoJSON.
+Returns the current boundaries as GeoJSON.
 
-`setGeoJSON(geojson: GeoJSON): void`
+`setGeoJSON(geojson: FeatureCollection): void`
 
-Loads a boundary from GeoJSON and renders it on the map.
+Loads boundaries from GeoJSON and renders them on the map.
+
+`setView(lat: number, lng: number, zoom?: number): void`
+
+Moves the map to the specified location.
 
 `clear(): void`
 
-Removes the current boundary.
+Removes all boundaries.
 
 ---
 
@@ -148,7 +172,7 @@ The output is compatible with:
 
 ## Roadmap
 
-- v0.2: multiple boundaries (FeatureCollection)
+- v0.2.x: optional geolocation-based initial view (opt-in)
 - v0.3: read-only mode
 - v0.4: additional map engine adapters (MapLibre, Google Maps)
 - v1.0: stable API
