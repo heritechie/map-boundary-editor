@@ -7,9 +7,20 @@
   <body>
     <h2>Map Boundary Editor Demo</h2>
     <map-boundary-editor
-      style="width: 800px; height: 500px"
+      style="width: 1024px; height: 800px"
     ></map-boundary-editor>
 
-    <script type="module" src="/src/index.ts"></script>
+    <script type="module" src="/src/index.ts">
+            import "/src/index.ts";
+
+      const editor = document.getElementById("editor");
+
+      // lifecycle-safe → boleh langsung
+      editor.setView(-6.2, 106.8, 5);
+
+      editor.addEventListener("change", (e) => {
+        console.log("GeoJSON:", e.detail.geojson);
+      });
+    </script>
   </body>
 </html>
