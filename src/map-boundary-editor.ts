@@ -74,7 +74,6 @@ export class MapBoundaryEditor extends HTMLElement {
 
     // CREATE
     this.map.on(L.Draw.Event.CREATED, (e: any) => {
-      this.drawnItems.clearLayers();
       this.drawnItems.addLayer(e.layer);
       this.emitChange();
     });
@@ -100,7 +99,7 @@ export class MapBoundaryEditor extends HTMLElement {
   }
 
   // =========================
-  // Public API (v0.1)
+  // Public API (v0.2)
   // =========================
 
   getGeoJSON() {
@@ -112,14 +111,13 @@ export class MapBoundaryEditor extends HTMLElement {
 
     this.drawnItems.clearLayers();
 
-    const layer = L.geoJSON(geojson, {
-      onEachFeature: (_, l) => {
-        this.drawnItems.addLayer(l);
+    const layerGroup = L.geoJSON(geojson, {
+      onEachFeature: (_, layer) => {
+        this.drawnItems.addLayer(layer);
       },
     });
 
-    // zoom map to boundary
-    const bounds = layer.getBounds();
+    const bounds = layerGroup.getBounds();
     if (bounds.isValid()) {
       this.map.fitBounds(bounds);
     }
