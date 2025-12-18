@@ -5,6 +5,7 @@ export class MapBoundaryEditor extends HTMLElement {
   private map?: L.Map;
   private drawnItems = new L.FeatureGroup();
   private isReady = false;
+  private isGeolocating = false;
   private pendingActions: (() => void)[] = [];
 
   constructor() {
@@ -139,6 +140,9 @@ export class MapBoundaryEditor extends HTMLElement {
     if (!this.map) return;
     if (!this.hasAttribute("use-geolocation")) return;
     if (!navigator.geolocation) return;
+    if (this.isGeolocating) return;
+
+    this.isGeolocating = true;
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -146,7 +150,7 @@ export class MapBoundaryEditor extends HTMLElement {
         this.map!.setView([latitude, longitude], 13);
       },
       () => {
-        // silent fallback
+        this.isGeolocating = false;
       }
     );
   }
