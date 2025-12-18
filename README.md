@@ -33,15 +33,14 @@ tightly coupled to a specific map provider.
 
 ---
 
-## Features (v0.1)
+## Features
 
-- Draw, edit, and delete a polygon boundary
+- Draw, edit, and delete polygon boundaries
+- Supports **multiple boundaries** (GeoJSON `FeatureCollection`)
 - Leaflet-based (no API key required)
 - Outputs standard GeoJSON (RFC 7946)
-- Framework-agnostic (Web Component)
-- Easy to embed in any web application
-
-> Note: v0.1 supports a single boundary only.
+- Framework-agnostic Web Component
+- **Lifecycle-safe public API** (no timing hacks required)
 
 ---
 
@@ -51,14 +50,6 @@ tightly coupled to a specific map provider.
 
 ```bash
 npm install map-boundary-editor
-```
-
----
-
-### Via script tag
-
-```html
-<script src="map-boundary-editor.min.js"></script>
 ```
 
 ---
@@ -85,7 +76,7 @@ Use module scripts only to ensure correct loading order.
 </script>
 ```
 
-> Note: All public APIs (`setView`, `setGeoJSON`, `clear`) are safe to call immediately after the element is created. No `setTimeout` or `customElements.whenDefined` is required.
+> All public APIs (`setView`, `setGeoJSON`, `clear`) are safe to call immediately after the element is created. No `setTimeout` or `customElements.whenDefined` is required.
 
 ---
 
@@ -161,6 +152,45 @@ The initial map view follows this priority order:
 
 ---
 
+### Interaction with setView()
+
+If `setView()` is called by the host application, it will override the geolocation-based view.
+
+```js
+editor.setView(-6.2, 106.8, 11);
+```
+
+This allows full programmatic control when needed.
+
+---
+
+### Geolocation Toggle Behavior
+
+The `use-geolocation` attribute is reactive and can be toggled at runtime.
+
+```js
+editor.setAttribute("use-geolocation", "");
+editor.removeAttribute("use-geolocation");
+```
+
+- Adding the attribute triggers a geolocation request
+- Removing the attribute does not reset the map view automatically
+- Only one geolocation request can be active at a time
+- Browser permission handling is respected (no repeated prompts)
+
+Geolocation is treated as a UX helper, not persistent state.
+
+---
+
+### Privacy Notes
+
+- Geolocation is never requested automatically
+- Location data is not stored
+- Location data is not transmitted
+- The feature only affects the initial map view
+
+---
+
 ## Public API (v0.1)
 
 `getGeoJSON(): FeatureCollection`
@@ -212,7 +242,6 @@ The output is compatible with:
 
 ## Roadmap
 
-- v0.2.x: optional geolocation-based initial view (opt-in)
 - v0.3: read-only mode
 - v0.4: additional map engine adapters (MapLibre, Google Maps)
 - v1.0: stable API
