@@ -94,21 +94,28 @@ If a boundary is later loaded using setGeoJSON, the map will automatically fit t
 
 ```js
 editor.setGeoJSON({
-  type: "Feature",
-  geometry: {
-    type: "Polygon",
-    coordinates: [
-      [
-        [106.8166, -6.2],
-        [106.82, -6.21],
-        [106.83, -6.205],
-        [106.8166, -6.2],
-      ],
-    ],
-  },
-  properties: {},
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [106.8166, -6.2],
+            [106.82, -6.21],
+            [106.83, -6.205],
+            [106.8166, -6.2],
+          ],
+        ],
+      },
+      properties: {},
+    },
+  ],
 });
 ```
+
+> Even when loading a single boundary, the data must be wrapped in a `FeatureCollection` for consistency.
 
 ---
 
