@@ -66,6 +66,8 @@ export class MapBoundaryEditor extends HTMLElement {
 
     this.pendingActions.forEach((fn) => fn());
     this.pendingActions = [];
+
+    this.maybeUseGeolocation();
   }
 
   private initDraw() {
@@ -111,6 +113,27 @@ export class MapBoundaryEditor extends HTMLElement {
       new CustomEvent("change", {
         detail: { geojson },
       })
+    );
+  }
+
+  private maybeUseGeolocation() {
+    if (!this.map) return;
+    if (!this.hasAttribute("use-geolocation")) return;
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        this.map!.setView([latitude, longitude], 13);
+      },
+      () => {
+        // silently ignore (fallback to default)
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 0,
+      }
     );
   }
 
