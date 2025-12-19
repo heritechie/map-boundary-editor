@@ -20,10 +20,6 @@ export class MapBoundaryEditor extends HTMLElement {
     return ["use-geolocation"];
   }
 
-  isReadonly() {
-    return this.readonly;
-  }
-
   connectedCallback() {
     if (!this.shadowRoot) return;
 
@@ -167,25 +163,18 @@ export class MapBoundaryEditor extends HTMLElement {
   // =========================
 
   getGeoJSON() {
-    if (!this.drawnItems) {
-      return {
-        type: "FeatureCollection",
-        features: [],
-      };
-    }
-
     return this.drawnItems.toGeoJSON();
   }
 
   setGeoJSON(geojson: any) {
     this.runOrQueue(() => {
-      if (!this.map || !this.drawnItems) return;
+      if (!this.map) return;
 
       this.drawnItems.clearLayers();
 
       const layerGroup = L.geoJSON(geojson, {
         onEachFeature: (_, layer) => {
-          this.drawnItems!.addLayer(layer);
+          this.drawnItems.addLayer(layer);
         },
       });
 
@@ -198,29 +187,12 @@ export class MapBoundaryEditor extends HTMLElement {
     });
   }
 
-  setView(lat: number, lng: number, zoom?: number) {
+  clear() {
     this.runOrQueue(() => {
-      if (!this.map) return;
+      if (!this.drawnItems) return;
 
-      if (typeof zoom === "number") {
-        this.map.setView([lat, lng], zoom);
-      } else {
-        this.map.panTo([lat, lng]);
-      }
-    });
-  }
-
-  setReadonly(value: boolean) {
-    this.runOrQueue(() => {
-      if (!this.map || !this.drawControl) return;
-
-      this.readonly = value;
-
-      if (value) {
-        this.map.removeControl(this.drawControl);
-      } else {
-        this.map.addControl(this.drawControl);
-      }
+      this.drawnItems.clearLayers();
+      this.emitChange();
     });
   }
 
@@ -250,12 +222,42 @@ export class MapBoundaryEditor extends HTMLElement {
     });
   }
 
-  clear() {
+  clearBoundary() {
     this.runOrQueue(() => {
-      if (!this.drawnItems) return;
+      if (!this.map || !this.boundaryLayer) return;
+      this.map.removeLayer(this.boundaryLayer);
+      this.boundaryLayer = undefined;
+    });
+  }
 
-      this.drawnItems.clearLayers();
-      this.emitChange();
+  setReadonly(value: boolean) {
+    this.runOrQueue(() => {
+      if (!this.map || !this.drawControl) return;
+      if (this.readonly === value) return;
+
+      this.readonly = value;
+
+      if (value) {
+        this.map.removeControl(this.drawControl);
+      } else {
+        this.map.addControl(this.drawControl);
+      }
+    });
+  }
+
+  isReadonly() {
+    return this.readonly;
+  }
+
+  setView(lat: number, lng: number, zoom?: number) {
+    this.runOrQueue(() => {
+      if (!this.map) return;
+
+      if (typeof zoom === "number") {
+        this.map.setView([lat, lng], zoom);
+      } else {
+        this.map.panTo([lat, lng]);
+      }
     });
   }
 }
