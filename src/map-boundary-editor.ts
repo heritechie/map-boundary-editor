@@ -114,12 +114,32 @@ export class MapBoundaryEditor extends HTMLElement {
 
     // CREATE
     this.map.on(L.Draw.Event.CREATED, (e: any) => {
-      this.drawnItems.addLayer(e.layer);
+      const layer = e.layer;
+
+      layer.setStyle({
+        color: "#1d4ed8",
+        weight: 3,
+        opacity: 1,
+
+        fillColor: "#3b82f6",
+        fillOpacity: 0.35,
+      });
+
+      this.drawnItems.addLayer(layer);
       this.emitChange();
     });
 
     // EDIT
-    this.map.on(L.Draw.Event.EDITED, () => {
+    this.map.on(L.Draw.Event.EDITED, (e: any) => {
+      e.layers.eachLayer((layer: any) => {
+        layer.setStyle({
+          color: "#1d4ed8",
+          weight: 3,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.35,
+        });
+      });
+
       this.emitChange();
     });
 
@@ -204,13 +224,25 @@ export class MapBoundaryEditor extends HTMLElement {
     this.runOrQueue(() => {
       if (!this.map) return;
 
+      // remove existing boundary
       if (this.boundaryLayer) {
         this.map.removeLayer(this.boundaryLayer);
         this.boundaryLayer = undefined;
       }
 
+      // create boundary with proper style
       this.boundaryLayer = L.geoJSON(geojson, {
         interactive: false,
+        style: {
+          color: "#2563eb",
+          weight: 2,
+          opacity: 0.9,
+
+          fillColor: "#2563eb",
+          fillOpacity: 0.05, // KEY: very light fill
+
+          dashArray: "6 6",
+        },
       });
 
       this.boundaryLayer.addTo(this.map);

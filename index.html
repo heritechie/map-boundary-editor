@@ -1,54 +1,242 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>map-boundary-editor demo</title>
+    <title>Map Boundary Editor – Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <style>
+      /* ===== Base Layout ===== */
+      html,
       body {
-        font-family: sans-serif;
+        height: 100%;
+        margin: 0;
       }
-      .controls {
-        margin-bottom: 12px;
+
+      body {
+        display: flex;
+        flex-direction: column;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        color: #222;
       }
-      button {
+
+      /* ===== Header ===== */
+      header {
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e5e5;
+        background: #fff;
+      }
+
+      header h2 {
+        margin: 0 0 4px 0;
+        font-size: 18px;
+      }
+
+      header p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      /* ===== Toolbar ===== */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-bottom: 1px solid #eee;
+        background: #fafafa;
+      }
+
+      .toolbar button {
         padding: 6px 10px;
-        margin-right: 8px;
+        border: 1px solid #ccc;
+        background: #fff;
+        border-radius: 4px;
         cursor: pointer;
+        font-size: 13px;
+      }
+
+      .toolbar button.active {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+
+      .badge {
+        margin-left: auto;
+        font-size: 12px;
+        color: #555;
+        background: #eef2ff;
+        padding: 4px 10px;
+        border-radius: 999px;
+      }
+
+      /* ===== Map ===== */
+      map-boundary-editor {
+        flex: 1;
+        min-height: 0; /* IMPORTANT for flex layout */
+        display: block;
+      }
+
+      /* ===== Legend ===== */
+      .legend {
+        padding: 8px 16px;
+        font-size: 12px;
+        color: #555;
+        border-top: 1px solid #e5e5e5;
+        background: #fff;
+      }
+
+      .legend p {
+        margin: 4px 0;
       }
     </style>
   </head>
-  <body>
-    <h2>Map Boundary Editor Demo</h2>
 
-    <div class="controls">
-      <button id="enableGeo">Enable Geolocation</button>
-      <button id="disableGeo">Disable Geolocation</button>
+  <body>
+    <!-- ===== HEADER ===== -->
+    <header>
+      <h2>Map Boundary Editor</h2>
+      <p>Focused GeoJSON boundary editor with readonly support</p>
+    </header>
+
+    <!-- ===== TOOLBAR ===== -->
+    <div class="toolbar">
+      <button id="btnEditable" class="active">Editable</button>
+      <button id="btnReadonly">Readonly</button>
+
+      <span class="badge">Boundary: ON</span>
     </div>
 
-    <map-boundary-editor
-      id="editor"
-      style="width: 1024px; height: 800px; border: 1px solid #ccc"
-    >
-    </map-boundary-editor>
+    <!-- ===== MAP ===== -->
+    <map-boundary-editor id="editor"></map-boundary-editor>
 
+    <!-- ===== LEGEND ===== -->
+    <div class="legend">
+      <p>
+        <span
+          style="
+            display: inline-block;
+            width: 14px;
+            height: 10px;
+            border: 2px dashed #2563eb;
+            background: rgba(37, 99, 235, 0.05);
+            margin-right: 6px;
+            vertical-align: middle;
+          "
+        ></span>
+        Administrative boundary (reference / locked)
+      </p>
+
+      <p>
+        <span
+          style="
+            display: inline-block;
+            width: 14px;
+            height: 10px;
+            border: 2px solid #1d4ed8;
+            background: rgba(59, 130, 246, 0.35);
+            margin-right: 6px;
+            vertical-align: middle;
+          "
+        ></span>
+        Editable polygon (user-defined area)
+      </p>
+
+      <p style="margin-top: 6px">
+        GeoJSON output is emitted via <code>change</code> event
+      </p>
+    </div>
+
+    <!-- ===== SCRIPT ===== -->
     <script type="module">
+      // Load component (Vite dev environment)
       import "/src/index.ts";
 
       const editor = document.getElementById("editor");
-      const enableBtn = document.getElementById("enableGeo");
-      const disableBtn = document.getElementById("disableGeo");
+      const btnEditable = document.getElementById("btnEditable");
+      const btnReadonly = document.getElementById("btnReadonly");
 
-      enableBtn.addEventListener("click", () => {
-        editor.setAttribute("use-geolocation", "");
+      /* =========================
+         DEMO DATA
+      ========================= */
+
+      // Editable polygon (user-defined area)
+      editor.setGeoJSON({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [108.565, -6.765],
+                  [108.575, -6.765],
+                  [108.575, -6.775],
+                  [108.565, -6.775],
+                  [108.565, -6.765],
+                ],
+              ],
+            },
+          },
+        ],
       });
 
-      disableBtn.addEventListener("click", () => {
-        editor.removeAttribute("use-geolocation");
+      // Reference boundary (clear & administrative-like)
+      editor.setBoundary({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: {
+              name: "DKI Jakarta",
+              admin_level: "province",
+              source: "OpenStreetMap (simplified for demo)",
+            },
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [106.689, -6.095], // Barat Laut
+                  [106.735, -6.045], // Utara
+                  [106.905, -6.045], // Timur Laut
+                  [107.025, -6.115], // Timur
+                  [107.035, -6.265], // Timur Selatan
+                  [106.965, -6.345], // Selatan Timur
+                  [106.845, -6.375], // Selatan
+                  [106.725, -6.335], // Selatan Barat
+                  [106.675, -6.255], // Barat
+                  [106.689, -6.095], // Close polygon
+                ],
+              ],
+            },
+          },
+        ],
       });
+
+      /* =========================
+         MODE SWITCH
+      ========================= */
+
+      function setMode(readonly) {
+        editor.setReadonly(readonly);
+        btnEditable.classList.toggle("active", !readonly);
+        btnReadonly.classList.toggle("active", readonly);
+      }
+
+      btnEditable.addEventListener("click", () => setMode(false));
+      btnReadonly.addEventListener("click", () => setMode(true));
+
+      /* =========================
+         OUTPUT (DEV FRIENDLY)
+      ========================= */
 
       editor.addEventListener("change", (e) => {
-        console.log("GeoJSON:", e.detail.geojson);
+        console.log("Editable GeoJSON:", e.detail.geojson);
       });
     </script>
   </body>
