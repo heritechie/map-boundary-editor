@@ -4,6 +4,7 @@ import "leaflet-draw";
 export class MapBoundaryEditor extends HTMLElement {
   private map?: L.Map;
   private drawnItems = new L.FeatureGroup();
+  private drawControl?: L.Control.Draw;
   private isReady = false;
   private isGeolocating = false;
   private pendingActions: (() => void)[] = [];
@@ -93,7 +94,7 @@ export class MapBoundaryEditor extends HTMLElement {
   private initDraw() {
     if (!this.map) return;
 
-    const drawControl = new L.Control.Draw({
+    this.drawControl = new L.Control.Draw({
       edit: {
         featureGroup: this.drawnItems,
       },
@@ -107,7 +108,7 @@ export class MapBoundaryEditor extends HTMLElement {
       },
     });
 
-    this.map.addControl(drawControl);
+    this.map.addControl(this.drawControl);
 
     // CREATE
     this.map.on(L.Draw.Event.CREATED, (e: any) => {
@@ -199,6 +200,20 @@ export class MapBoundaryEditor extends HTMLElement {
         this.map.setView([lat, lng], zoom);
       } else {
         this.map.panTo([lat, lng]);
+      }
+    });
+  }
+
+  setReadonly(value: boolean) {
+    this.runOrQueue(() => {
+      if (!this.map || !this.drawControl) return;
+
+      this.readonly = value;
+
+      if (value) {
+        this.map.removeControl(this.drawControl);
+      } else {
+        this.map.addControl(this.drawControl);
       }
     });
   }
