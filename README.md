@@ -4,12 +4,12 @@
 [![license](https://img.shields.io/npm/l/map-boundary-editor)](LICENSE)
 [![downloads](https://img.shields.io/npm/dm/map-boundary-editor)](https://www.npmjs.com/package/map-boundary-editor)
 
-**map-boundary-editor** is a generic, embeddable, map-based boundary editor
-implemented as a Web Component.
+**map-boundary-editor** is a lightweight, embeddable map-based boundary editor
+designed for defining and validating geographic service boundaries.
 
-It allows users to visually draw and edit a geographic boundary
-and outputs a standard **GeoJSON** representation that can be reused
-across different map engines and backend systems.
+It is optimized for use cases where a **user-defined area (polygon)** must be
+evaluated against a **fixed administrative or reference boundary** — such as
+service eligibility, coverage restriction, or zoning rules.
 
 ---
 
@@ -22,6 +22,9 @@ Many applications need users to define geographic areas:
 - eligibility rules
 - geofencing configuration
 
+A common requirement in these use cases is a clear separation between
+**editable user input** and **non-editable reference boundaries**.
+
 Most teams end up rebuilding the same map drawing logic again and again,
 tightly coupled to a specific map provider.
 
@@ -33,14 +36,31 @@ tightly coupled to a specific map provider.
 
 ---
 
+## Key Concepts
+
+### Editable Polygon
+
+A polygon created or modified by the user to represent an area of interest
+(e.g. delivery zone, service coverage).
+
+### Reference Boundary
+
+A fixed, non-editable boundary used as a reference for validation or restriction.
+Typical examples include cities, provinces, or regulatory zones.
+
+### Readonly Mode
+
+A mode where editing controls are disabled, allowing the map to be used purely
+for visualization, review, or approval workflows.
+
+---
+
 ## Features
 
-- Draw, edit, and delete polygon boundaries
-- Supports **multiple boundaries** (GeoJSON `FeatureCollection`)
-- Leaflet-based (no API key required)
-- Outputs standard GeoJSON (RFC 7946)
-- Framework-agnostic Web Component
-- **Lifecycle-safe public API** (no timing hacks required)
+- Draw, edit, and delete **editable polygon** boundaries
+- Support for fixed, non-editable **reference boundaries**
+- Read-only mode for review or visualization use cases
+- Supports multiple editable boundaries (GeoJSON `FeatureCollection`)
 
 ---
 
@@ -56,41 +76,56 @@ npm install map-boundary-editor
 
 ## Basic Usage (Recommended)
 
-Use module scripts only to ensure correct loading order.
+The most common usage pattern is defining an editable area **within** a fixed reference boundary.
 
 ```html
-<map-boundary-editor id="editor" style="width: 800px; height: 500px;">
-</map-boundary-editor>
+<map-boundary-editor
+  id="editor"
+  style="width: 800px; height: 500px;"
+></map-boundary-editor>
 
 <script type="module">
   import "map-boundary-editor";
 
   const editor = document.getElementById("editor");
 
-  // Public APIs are lifecycle-safe
-  editor.setView(-6.2, 106.8, 11);
+  // Set a fixed reference boundary (e.g. administrative area)
+  editor.setBoundary({
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [106.69, -6.1],
+              [107.03, -6.1],
+              [107.03, -6.38],
+              [106.69, -6.38],
+              [106.69, -6.1],
+            ],
+          ],
+        },
+        properties: {},
+      },
+    ],
+  });
 
+  // Listen for user-defined polygon changes
   editor.addEventListener("change", (e) => {
-    console.log("GeoJSON:", e.detail.geojson);
+    console.log("Editable GeoJSON:", e.detail.geojson);
   });
 </script>
 ```
 
-> All public APIs (`setView`, `setGeoJSON`, `clear`) are safe to call immediately after the element is created. No `setTimeout` or `customElements.whenDefined` is required.
+> All public APIs (`setView`, `setGeoJSON`, `clear`, etc.) are safe to call
+> immediately after the element is created.
+> No `setTimeout` or `customElements.whenDefined` is required.
 
 ---
 
-### Setting Initial View
-
-```js
-editor.setView(lat, lng, zoom);
-```
-
-If a boundary is later loaded using setGeoJSON, the map will automatically fit to the boundary.
-
----
-
-### Loading an Existing Boundary
+### Loading an Existing Editable Boundary
 
 ```js
 editor.setGeoJSON({
@@ -115,114 +150,89 @@ editor.setGeoJSON({
 });
 ```
 
-> Even when loading a single boundary, the data must be wrapped in a `FeatureCollection` for consistency.
+Even when loading a single boundary, the data must be wrapped in a `FeatureCollection` for consistency.
 
 ---
 
-### Optional: Use User Geolocation
+### View Control
 
-`map-boundary-editor` supports an optional geolocation-based initial view to help users quickly focus on their current area.
+```js
+editor.setView(lat, lng, zoom);
+```
 
-This feature is **opt-in** and **disabled by default**.
+If editable boundaries are later loaded using `setGeoJSON`, the map will automatically fit to the boundary.
 
 ---
 
-### Enable Geolocation (Opt-in)
+### Optional: Geolocation Helper
+
+An optional geolocation helper is available to center the map on the user's current location.
+
+This feature only affects the initial view and does not modify boundaries or output GeoJSON.
 
 ```html
 <map-boundary-editor use-geolocation></map-boundary-editor>
 ```
 
-When enabled:
-
-- The editor will attempt to center the map on the user’s current location
-- The browser will request permission explicitly
-- If permission is denied or unavailable, the map silently falls back to the default view
-
 ---
 
-### Behavior & Priority Rules
+## Public API (v0.3)
 
-The initial map view follows this priority order:
-
-1. `setGeoJSON()`
-
-   If boundaries are loaded, the map will automatically fit to them.
-
-2. `use-geolocation` **attribute**
-
-   If enabled and permission is granted, the map centers on the user’s location.
-
-3. **Default view**
-
-   Falls back to a neutral world view (`[0, 0]`, zoom `2`).
-
----
-
-### Interaction with setView()
-
-If `setView()` is called by the host application, it will override the geolocation-based view.
-
-```js
-editor.setView(-6.2, 106.8, 11);
-```
-
-This allows full programmatic control when needed.
-
----
-
-### Geolocation Toggle Behavior
-
-The `use-geolocation` attribute is reactive and can be toggled at runtime.
-
-```js
-editor.setAttribute("use-geolocation", "");
-editor.removeAttribute("use-geolocation");
-```
-
-- Adding the attribute triggers a geolocation request
-- Removing the attribute does not reset the map view automatically
-- Only one geolocation request can be active at a time
-- Browser permission handling is respected (no repeated prompts)
-
-Geolocation is treated as a UX helper, not persistent state.
-
----
-
-### Privacy Notes
-
-- Geolocation is never requested automatically
-- Location data is not stored
-- Location data is not transmitted
-- The feature only affects the initial map view
-
----
-
-## Public API (v0.1)
-
-`getGeoJSON(): FeatureCollection`
-
-Returns the current boundaries as GeoJSON.
+### Editable Polygon
 
 `setGeoJSON(geojson: FeatureCollection): void`
 
-Loads boundaries from GeoJSON and renders them on the map.
+Loads editable polygon boundaries from GeoJSON.
+
+`getGeoJSON(): FeatureCollection`
+
+Returns the current editable polygon boundaries.
+
+`clear(): void`
+
+Removes all editable polygon boundaries.
+
+---
+
+### Reference Boundary
+
+`setBoundary(geojson: FeatureCollection): void`
+
+Sets a fixed, non-editable reference boundary.
+
+`getBoundary(): FeatureCollection | null`
+
+Returns the current reference boundary.
+
+`clearBoundary(): void`
+
+Removes the reference boundary from the map.
+
+---
+
+### Mode Control
+
+`setReadonly(value: boolean): void`
+
+Enables or disables editing controls.
+
+`isReadonly(): boolean`
+
+Returns the current readonly state.
+
+---
+
+### View Control
 
 `setView(lat: number, lng: number, zoom?: number): void`
 
 Moves the map to the specified location.
 
-`clear(): void`
-
-Removes all boundaries.
-
----
-
 ## Events
 
-`change`
+### change
 
-Fired whenever the boundary is created, edited, or deleted.
+Fired whenever the editable polygon is created, edited, or deleted.
 
 ```js
 editor.addEventListener("change", (e) => {
@@ -236,8 +246,7 @@ editor.addEventListener("change", (e) => {
 
 The editor uses GeoJSON as its data contract.
 
-GeoJSON is treated as the single source of truth and is intentionally decoupled
-from any specific map engine.
+GeoJSON is treated as the single source of truth and is intentionally decoupled from any specific map engine.
 
 The output is compatible with:
 
@@ -247,10 +256,32 @@ The output is compatible with:
 
 ---
 
+## Demo
+
+A demo is included in the repository to showcase:
+
+- Editable polygons vs administrative reference boundaries
+- Visual hierarchy between reference and user-defined areas
+- Readonly vs editable interaction modes
+
+The demo also serves as a reference implementation for integrating the component
+into real-world applications.
+
+---
+
 ## Roadmap
 
-- v0.3: read-only mode
+- v0.3: reference boundary support, read-only mode, improved demo UX
 - v0.4: additional map engine adapters (MapLibre, Google Maps)
 - v1.0: stable API
 
 ---
+
+## Non-Goals
+
+This project is intentionally not:
+
+- A full GIS editor
+- A GeoJSON validation library
+- A replacement for tools like geojson.io
+- A general-purpose map rendering framework
