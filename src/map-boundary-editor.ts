@@ -5,6 +5,8 @@ export class MapBoundaryEditor extends HTMLElement {
   private map?: L.Map;
   private drawnItems = new L.FeatureGroup();
   private drawControl?: L.Control.Draw;
+  private readonly = false;
+  private boundaryLayer?: L.GeoJSON;
   private isReady = false;
   private isGeolocating = false;
   private pendingActions: (() => void)[] = [];
@@ -16,6 +18,10 @@ export class MapBoundaryEditor extends HTMLElement {
 
   static get observedAttributes() {
     return ["use-geolocation"];
+  }
+
+  isReadonly() {
+    return this.readonly;
   }
 
   connectedCallback() {
@@ -51,7 +57,7 @@ export class MapBoundaryEditor extends HTMLElement {
 
   attributeChangedCallback(
     name: string,
-    oldValue: string | null,
+    _oldValue: string | null,
     newValue: string | null
   ) {
     if (name === "use-geolocation") {
@@ -157,7 +163,7 @@ export class MapBoundaryEditor extends HTMLElement {
   }
 
   // =========================
-  // Public API (v0.2)
+  // Public API (v0.3)
   // =========================
 
   getGeoJSON() {
@@ -214,6 +220,32 @@ export class MapBoundaryEditor extends HTMLElement {
         this.map.removeControl(this.drawControl);
       } else {
         this.map.addControl(this.drawControl);
+      }
+    });
+  }
+
+  getBoundary() {
+    return this.boundaryLayer ? this.boundaryLayer.toGeoJSON() : null;
+  }
+
+  setBoundary(geojson: any) {
+    this.runOrQueue(() => {
+      if (!this.map) return;
+
+      if (this.boundaryLayer) {
+        this.map.removeLayer(this.boundaryLayer);
+        this.boundaryLayer = undefined;
+      }
+
+      this.boundaryLayer = L.geoJSON(geojson, {
+        interactive: false,
+      });
+
+      this.boundaryLayer.addTo(this.map);
+
+      const bounds = this.boundaryLayer.getBounds();
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds);
       }
     });
   }
