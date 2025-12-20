@@ -61,6 +61,7 @@ for visualization, review, or approval workflows.
 - Support for fixed, non-editable **reference boundaries**
 - Read-only mode for review or visualization use cases
 - Supports multiple editable boundaries (GeoJSON `FeatureCollection`)
+- No vendor lock-in or API keys required
 
 ---
 
@@ -264,8 +265,8 @@ A demo is included in the repository to showcase:
 - Visual hierarchy between reference and user-defined areas
 - Readonly vs editable interaction modes
 
-The demo also serves as a reference implementation for integrating the component
-into real-world applications.
+Live demo on StackBlitz:  
+https://stackblitz.com/github/heritechie/map-boundary-editor
 
 ---
 
@@ -274,6 +275,8 @@ into real-world applications.
 - v0.3: reference boundary support, read-only mode, improved demo UX
 - v0.4: additional map engine adapters (MapLibre, Google Maps)
 - v1.0: stable API
+
+The roadmap is intentionally conservative to keep the core API stable.
 
 ---
 
@@ -285,3 +288,5 @@ This project is intentionally not:
 - A GeoJSON validation library
 - A replacement for tools like geojson.io
 - A general-purpose map rendering framework
+
+---
