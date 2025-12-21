@@ -70,8 +70,6 @@ export class MapBoundaryEditor extends HTMLElement {
 
     this.pendingActions.forEach((fn) => fn());
     this.pendingActions = [];
-
-    this.maybeUseGeolocation();
   }
 
   private initDraw() {
