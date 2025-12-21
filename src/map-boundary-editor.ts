@@ -16,10 +16,6 @@ export class MapBoundaryEditor extends HTMLElement {
     this.attachShadow({ mode: "open" });
   }
 
-  static get observedAttributes() {
-    return ["use-geolocation"];
-  }
-
   connectedCallback() {
     if (!this.shadowRoot) return;
 
@@ -49,21 +45,6 @@ export class MapBoundaryEditor extends HTMLElement {
 
     this.initMap();
     this.initDraw();
-  }
-
-  attributeChangedCallback(
-    name: string,
-    _oldValue: string | null,
-    newValue: string | null
-  ) {
-    if (name === "use-geolocation") {
-      // attribute added
-      if (newValue !== null) {
-        this.runOrQueue(() => {
-          this.maybeUseGeolocation();
-        });
-      }
-    }
   }
 
   private runOrQueue(action: () => void) {
@@ -159,28 +140,71 @@ export class MapBoundaryEditor extends HTMLElement {
     );
   }
 
-  private maybeUseGeolocation() {
-    if (!this.map) return;
-    if (!this.hasAttribute("use-geolocation")) return;
-    if (!navigator.geolocation) return;
-    if (this.isGeolocating) return;
-
-    this.isGeolocating = true;
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        this.map!.setView([latitude, longitude], 13);
-      },
-      () => {
-        this.isGeolocating = false;
-      }
-    );
-  }
-
   // =========================
   // Public API (v0.3)
   // =========================
+  async enableGeolocation() {
+    if (!this.map) {
+      return {
+        status: "error",
+        error: { message: "Map is not ready" },
+      };
+    }
+
+    if (!("geolocation" in navigator)) {
+      return {
+        status: "error",
+        error: { message: "Geolocation not supported" },
+      };
+    }
+
+    if (this.isGeolocating) {
+      return {
+        status: "pending",
+      };
+    }
+
+    this.isGeolocating = true;
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+
+          this.map!.setView([latitude, longitude], 13);
+          this.isGeolocating = false;
+
+          this.dispatchEvent(
+            new CustomEvent("geolocation:success", {
+              detail: { lat: latitude, lng: longitude },
+            })
+          );
+
+          resolve({
+            status: "granted",
+            position: { lat: latitude, lng: longitude },
+          });
+        },
+        (err) => {
+          this.isGeolocating = false;
+
+          this.dispatchEvent(
+            new CustomEvent("geolocation:error", {
+              detail: err,
+            })
+          );
+
+          resolve({
+            status: "denied",
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+      );
+    });
+  }
 
   getGeoJSON() {
     return this.drawnItems.toGeoJSON();
