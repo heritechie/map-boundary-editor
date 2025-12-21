@@ -1,6 +1,6 @@
 {
   "name": "map-boundary-editor",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Generic embeddable map boundary editor as a Web Component",
   "license": "MIT",
   "type": "module",
