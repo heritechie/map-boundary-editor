@@ -165,14 +165,12 @@ If editable boundaries are later loaded using `setGeoJSON`, the map will automat
 
 ---
 
-### Optional: Geolocation Helper
+### Geolocation
 
-An optional geolocation helper is available to center the map on the user's current location.
+Geolocation must be triggered explicitly from a user interaction due to browser permission requirements.
 
-This feature only affects the initial view and does not modify boundaries or output GeoJSON.
-
-```html
-<map-boundary-editor use-geolocation></map-boundary-editor>
+```js
+editor.enableGeolocation();
 ```
 
 ---
